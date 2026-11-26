@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test and build
+    runs-on: ubuntu-latest
+    steps:
+      # actions are pinned to commit SHAs; the comment names the tag they point to
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: lts/*
+
+      # The conversion logic, under Node.
+      - run: npm test
+
+      # The module that ships: compiled with Javy, then run in a real kevin.
+      - run: sh scripts/build.sh
+      - uses: ./.github/actions/kevin
+      - run: KEVIN="$PWD/.kevin/zig-out/bin/kevin" sh scripts/e2e.sh

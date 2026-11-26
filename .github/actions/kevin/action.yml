@@ -1,0 +1,25 @@
+name: Build kevin
+description: Builds kevin from source into .kevin/zig-out/bin/kevin.
+
+inputs:
+  ref:
+    description: Branch, tag or commit of mtxr/kevin to build.
+    default: main
+  zig-version:
+    description: Zig version used to build kevin.
+    default: 0.17.0
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      with:
+        repository: mtxr/kevin
+        ref: ${{ inputs.ref }}
+        path: .kevin
+    - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2
+      with:
+        version: ${{ inputs.zig-version }}
+    - run: zig build
+      shell: bash
+      working-directory: .kevin

@@ -1,0 +1,48 @@
+name: Release
+
+# Publishes dist/node.wasm. Bump "version" in package.json, then push the tag:
+#   git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release
+      id-token: write # sign the build provenance
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: lts/*
+
+      - name: The tag matches package.json
+        run: |
+          want="v$(node -p "require('./package.json').version")"
+          [ "$GITHUB_REF_NAME" = "$want" ] || { echo "tag $GITHUB_REF_NAME, but package.json says $want" >&2; exit 1; }
+
+      - run: npm test
+      - run: sh scripts/build.sh
+      - uses: ./.github/actions/kevin
+      - run: KEVIN="$PWD/.kevin/zig-out/bin/kevin" sh scripts/e2e.sh
+
+      - name: Checksum
+        working-directory: dist
+        run: shasum -a 256 node.wasm > node.wasm.sha256
+
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
+        with:
+          subject-path: dist/node.wasm
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/node.wasm dist/node.wasm.sha256 \
+            --title "$GITHUB_REF_NAME" --generate-notes

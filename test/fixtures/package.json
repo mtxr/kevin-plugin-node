@@ -1,0 +1,7 @@
+{
+  "name": "fixture",
+  "scripts": {
+    "hello": "echo hello from script",
+    "test unit": "echo unit"
+  }
+}

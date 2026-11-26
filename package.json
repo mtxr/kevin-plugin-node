@@ -1,0 +1,11 @@
+{
+  "name": "kevin-plugin-node",
+  "version": "0.1.0",
+  "description": "A kevin converter plugin that turns the scripts of a package.json into kevin tasks. Written in JavaScript, shipped as WebAssembly.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test test/",
+    "build": "sh scripts/build.sh"
+  }
+}
