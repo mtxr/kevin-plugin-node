@@ -98,16 +98,19 @@ CI (`.github/workflows/ci.yml`) runs the Node tests, builds the module and runs
 `e2e.sh` against kevin built from source (`mtxr/kevin`, `main`) on every push
 and pull request.
 
-To publish, bump `version` in `package.json`, merge, then push a tag:
+Releases are driven by [release-please](https://github.com/googleapis/release-please)
+from [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`,
+`fix:`, ...). It keeps a release PR open with the changelog and the version bump
+in `package.json`. Merging that PR:
 
-```sh
-git tag v0.1.0 && git push origin v0.1.0
-```
+1. creates the tag and the GitHub release;
+2. the `publish` job (same workflow, `release.yml`) checks the tag against
+   `package.json`, runs the tests, builds `dist/node.wasm`, runs it in a real
+   kevin, and only then uploads `node.wasm` and `node.wasm.sha256` to the
+   release, with a signed build provenance.
 
-`release.yml` checks that the tag matches `package.json`, repeats the tests and
-the e2e run, writes `node.wasm.sha256`, attests the build provenance and creates
-the GitHub release with `node.wasm` and the checksum. The asset name is stable,
-so `releases/latest/download/node.wasm` always points at the newest one.
+The asset name is stable, so `releases/latest/download/node.wasm` always points
+at the newest one. Nothing is published if the module does not run in kevin.
 
 ## How errors look
 
